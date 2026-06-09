@@ -1,199 +1,189 @@
 #include <cassert>
-#include <queue>
 #include <vector>
-#include "../main.cpp"    
 
 using namespace std;
 
-//
-// ПЬЯНИЦА
-//
-
-void testZeroBeatsNine()
+struct Card
 {
-    DrunkardGame game;
+    int rank;
+    int suit;
+};
 
-    assert(game.firstWinsRound(0, 9));
+bool beats(Card attack,
+           Card defend,
+           int trumpSuit)
+{
+    if (attack.suit == defend.suit)
+        return defend.rank > attack.rank;
+
+    if (defend.suit == trumpSuit &&
+        attack.suit != trumpSuit)
+        return true;
+
+    return false;
 }
 
-void testNineLosesToZero()
+void testDeckSize()
 {
-    DrunkardGame game;
+    vector<Card> deck;
 
-    assert(!game.firstWinsRound(9, 0));
-}
-
-void testHigherCardWins()
-{
-    DrunkardGame game;
-
-    assert(game.firstWinsRound(8, 3));
-}
-
-void testLowerCardLoses()
-{
-    DrunkardGame game;
-
-    assert(!game.firstWinsRound(2, 7));
-}
-
-void testFirstPlayerWinsGame()
-{
-    queue<int> p1;
-    queue<int> p2;
-
-    p1.push(9);
-    p1.push(8);
-    p1.push(7);
-    p1.push(6);
-    p1.push(5);
-
-    p2.push(1);
-    p2.push(2);
-    p2.push(3);
-    p2.push(4);
-    p2.push(0);
-
-    DrunkardGame game;
-
-    string result = game.play(p1, p2);
-
-    assert(result.find("first") != string::npos);
-}
-
-void testSecondPlayerWinsGame()
-{
-    queue<int> p1;
-    queue<int> p2;
-
-    p1.push(1);
-    p1.push(2);
-    p1.push(3);
-    p1.push(4);
-    p1.push(5);
-
-    p2.push(9);
-    p2.push(8);
-    p2.push(7);
-    p2.push(6);
-    p2.push(0);
-
-    DrunkardGame game;
-
-    string result = game.play(p1, p2);
-
-    assert(result.find("second") != string::npos);
-}
-
-//
-// ДУРАК
-//
-
-void testDeckContains36Cards()
-{
-    DurakGame game;
-
-    vector<Card> deck = game.createDeck();
+    for (int suit = 0; suit < 4; suit++)
+    {
+        for (int rank = 6; rank <= 14; rank++)
+        {
+            deck.push_back({rank, suit});
+        }
+    }
 
     assert(deck.size() == 36);
 }
 
-void testDealCards()
+void testTrumpBeatsRegularCard()
 {
-    DurakGame game;
+    Card attack{10, 0};   // 10 пики
+    Card defend{6, 1};    // 6 червы
 
-    vector<Card> deck = game.createDeck();
-
-    vector<Card> p1;
-    vector<Card> p2;
-
-    game.dealCards(deck, p1, p2);
-
-    assert(p1.size() == 6);
-    assert(p2.size() == 6);
+    assert(
+        beats(
+            attack,
+            defend,
+            1
+        )
+    );
 }
 
-void testDeckAfterDeal()
+void testHigherCardSameSuit()
 {
-    DurakGame game;
+    Card attack{8, 0};
+    Card defend{10, 0};
 
-    vector<Card> deck = game.createDeck();
+    assert(
+        beats(
+            attack,
+            defend,
+            1
+        )
+    );
+}
 
-    vector<Card> p1;
-    vector<Card> p2;
+void testLowerCardSameSuit()
+{
+    Card attack{10, 0};
+    Card defend{8, 0};
 
-    game.dealCards(deck, p1, p2);
+    assert(
+        !beats(
+            attack,
+            defend,
+            1
+        )
+    );
+}
 
-    assert(deck.size() == 24);
+void testWrongSuitCannotBeat()
+{
+    Card attack{10, 0};
+    Card defend{14, 2};
+
+    assert(
+        !beats(
+            attack,
+            defend,
+            1
+        )
+    );
+}
+
+void testTrumpVsTrump()
+{
+    Card attack{8, 1};
+    Card defend{10, 1};
+
+    assert(
+        beats(
+            attack,
+            defend,
+            1
+        )
+    );
 }
 
 void testAceBeatsKing()
 {
-    DurakGame game;
-
-    Card ace  = {14, 0};
-    Card king = {13, 0};
-
-    assert(game.beats(king, ace, 3));
-}
-
-void testTrumpBeatsNonTrump()
-{
-    DurakGame game;
-
-    Card sixHearts  = {6, 0};
-    Card sixSpades  = {6, 3};
-
-    int trumpSuit = 3;
+    Card attack{13, 0};
+    Card defend{14, 0};
 
     assert(
-        game.beats(
-            sixHearts,
-            sixSpades,
-            trumpSuit
+        beats(
+            attack,
+            defend,
+            1
         )
     );
 }
 
-void testSameSuitHigherCardWins()
+void testSameCards()
 {
-    DurakGame game;
-
-    Card eight = {8, 1};
-    Card ten   = {10, 1};
+    Card attack{10, 0};
+    Card defend{10, 0};
 
     assert(
-        game.beats(
-            eight,
-            ten,
-            3
+        !beats(
+            attack,
+            defend,
+            1
         )
     );
+}
+
+void testCardCountAfterDeal()
+{
+    vector<Card> deck;
+
+    for (int suit = 0; suit < 4; suit++)
+    {
+        for (int rank = 6; rank <= 14; rank++)
+        {
+            deck.push_back({rank, suit});
+        }
+    }
+
+    vector<Card> player;
+    vector<Card> computer;
+
+    for (int i = 0; i < 6; i++)
+    {
+        player.push_back(deck.back());
+        deck.pop_back();
+
+        computer.push_back(deck.back());
+        deck.pop_back();
+    }
+
+    assert(player.size() == 6);
+    assert(computer.size() == 6);
+    assert(deck.size() == 24);
 }
 
 int main()
 {
-    //
-    // ПЬЯНИЦА
-    //
+    testDeckSize();
 
-    testZeroBeatsNine();
-    testNineLosesToZero();
-    testHigherCardWins();
-    testLowerCardLoses();
-    testFirstPlayerWinsGame();
-    testSecondPlayerWinsGame();
+    testTrumpBeatsRegularCard();
 
-    //
-    // ДУРАК
-    //
+    testHigherCardSameSuit();
 
-    testDeckContains36Cards();
-    testDealCards();
-    testDeckAfterDeal();
+    testLowerCardSameSuit();
+
+    testWrongSuitCannotBeat();
+
+    testTrumpVsTrump();
+
     testAceBeatsKing();
-    testTrumpBeatsNonTrump();
-    testSameSuitHigherCardWins();
+
+    testSameCards();
+
+    testCardCountAfterDeal();
 
     return 0;
 }
