@@ -71,17 +71,15 @@ private:
 
     void createDeck()
     {
-        for(int suit = 0;
-            suit < 4;
-            suit++)
+        deck.clear();
+        player.clear();
+        computer.clear();
+
+        for(int suit = 0; suit < 4; suit++)
         {
-            for(int rank = 6;
-                rank <= 14;
-                rank++)
+            for(int rank = 6; rank <= 14; rank++)
             {
-                deck.push_back(
-                    {rank, suit}
-                );
+                deck.push_back({rank, suit});
             }
         }
 
@@ -157,22 +155,41 @@ public:
         {
             showPlayerCards();
 
-            cout
-                << "\nВыберите карту для атаки: ";
-
             int choice;
-            cin >> choice;
 
-            choice--;
-
-            if(choice < 0 ||
-               choice >=
-               (int)player.size())
+            while(true)
             {
                 cout
-                    << "Неверный выбор\n";
+                    << "\nВыберите карту для атаки: ";
 
-                continue;
+                if(!(cin >> choice))
+                {
+                    cout
+                        << "Ошибка! Введите число.\n";
+
+                    cin.clear();
+
+                    cin.ignore(
+                        10000,
+                        '\n'
+                    );
+
+                    continue;
+                }
+
+                choice--;
+
+                if(choice < 0 ||
+                   choice >=
+                   (int)player.size())
+                {
+                    cout
+                        << "Такой карты нет.\n";
+
+                    continue;
+                }
+
+                break;
             }
 
             Card attack =
@@ -254,11 +271,30 @@ public:
 
             showPlayerCards();
 
-            cout
-                << "\nВыберите карту для защиты (0 если взять): ";
-
             int defendChoice;
-            cin >> defendChoice;
+
+            while(true)
+            {
+                cout
+                    << "\nВыберите карту для защиты (0 если взять): ";
+
+                if(!(cin >> defendChoice))
+                {
+                    cout
+                        << "Ошибка! Введите число.\n";
+
+                    cin.clear();
+
+                    cin.ignore(
+                        10000,
+                        '\n'
+                    );
+
+                    continue;
+                }
+
+                break;
+            }
 
             if(defendChoice == 0)
             {
@@ -277,6 +313,12 @@ public:
                    defendChoice >=
                    (int)player.size())
                 {
+                    cout
+                        << "Такой карты нет.\n";
+
+                    cout
+                        << "Вы забираете карту.\n";
+
                     player.push_back(
                         computerAttack
                     );
@@ -304,7 +346,10 @@ public:
                     else
                     {
                         cout
-                            << "Карта не бьёт\n";
+                            << "Карта не бьёт.\n";
+
+                        cout
+                            << "Вы забираете карту.\n";
 
                         player.push_back(
                             computerAttack
@@ -319,24 +364,57 @@ public:
                 << "\nКарт в колоде: "
                 << deck.size()
                 << "\n";
+
+            if(deck.empty() &&
+               (player.empty() ||
+                computer.empty()))
+            {
+                break;
+            }
         }
 
-        if(player.empty())
+        cout << "\n===== ИГРА ОКОНЧЕНА =====\n";
+
+        if(player.empty() &&
+           computer.empty())
         {
             cout
-                << "\nПоздравляем! Вы победили!\n";
+                << "Ничья!\n";
+        }
+        else if(player.empty())
+        {
+            cout
+                << "Поздравляем! Вы победили!\n";
+        }
+        else if(computer.empty())
+        {
+            cout
+                << "Победил компьютер!\n";
         }
         else
         {
-            cout
-                << "\nПобедил компьютер!\n";
+            if(player.size() <
+               computer.size())
+            {
+                cout
+                    << "Победили Вы!\n";
+            }
+            else
+            {
+                cout
+                    << "Победил компьютер!\n";
+            }
         }
     }
 };
 
 int main()
 {
-    srand(time(nullptr));
+    srand(
+        static_cast<unsigned>(
+            time(nullptr)
+        )
+    );
 
     DurakGame game;
 
