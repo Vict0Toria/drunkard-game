@@ -1,191 +1,346 @@
 #include <iostream>
-#include <queue>
 #include <vector>
 #include <algorithm>
 #include <ctime>
 
 using namespace std;
 
-class DrunkardGame
-{
-public:
-    void play()
-    {
-        queue<int> p1;
-        queue<int> p2;
-
-        cout << "Введите 5 карт первого игрока:\n";
-
-        for(int i = 0; i < 5; i++)
-        {
-            int x;
-            cin >> x;
-            p1.push(x);
-        }
-
-        cout << "Введите 5 карт второго игрока:\n";
-
-        for(int i = 0; i < 5; i++)
-        {
-            int x;
-            cin >> x;
-            p2.push(x);
-        }
-
-        int moves = 0;
-
-        while(!p1.empty() &&
-              !p2.empty() &&
-              moves < 1000000)
-        {
-            int a = p1.front();
-            int b = p2.front();
-
-            p1.pop();
-            p2.pop();
-
-            bool firstWins;
-
-            if(a == 0 && b == 9)
-                firstWins = true;
-            else if(a == 9 && b == 0)
-                firstWins = false;
-            else
-                firstWins = a > b;
-
-            if(firstWins)
-            {
-                p1.push(a);
-                p1.push(b);
-            }
-            else
-            {
-                p2.push(a);
-                p2.push(b);
-            }
-
-            moves++;
-        }
-
-        if(moves >= 1000000)
-        {
-            cout << "botva\n";
-        }
-        else if(p1.empty())
-        {
-            cout << "second " << moves << "\n";
-        }
-        else
-        {
-            cout << "first " << moves << "\n";
-        }
-    }
-};
-
 struct Card
 {
-    int value;
+    int rank;
+    int suit;
 };
 
 class DurakGame
 {
-public:
-    void play()
-    {
-        vector<Card> deck;
+private:
+    vector<Card> deck;
+    vector<Card> player;
+    vector<Card> computer;
 
-        for(int i = 6; i <= 14; i++)
+    int trumpSuit;
+
+    string rankToString(int rank)
+    {
+        if(rank <= 10)
+            return to_string(rank);
+
+        if(rank == 11)
+            return "J";
+
+        if(rank == 12)
+            return "Q";
+
+        if(rank == 13)
+            return "K";
+
+        return "A";
+    }
+
+    string suitToString(int suit)
+    {
+        if(suit == 0)
+            return "♠";
+
+        if(suit == 1)
+            return "♥";
+
+        if(suit == 2)
+            return "♦";
+
+        return "♣";
+    }
+
+    string cardToString(Card c)
+    {
+        return rankToString(c.rank)
+               + suitToString(c.suit);
+    }
+
+    bool beats(Card attack, Card defend)
+    {
+        if(attack.suit == defend.suit)
+            return defend.rank > attack.rank;
+
+        if(defend.suit == trumpSuit &&
+           attack.suit != trumpSuit)
+            return true;
+
+        return false;
+    }
+
+    void createDeck()
+    {
+        for(int suit = 0;
+            suit < 4;
+            suit++)
         {
-            for(int j = 0; j < 4; j++)
+            for(int rank = 6;
+                rank <= 14;
+                rank++)
             {
-                deck.push_back({i});
+                deck.push_back(
+                    {rank, suit}
+                );
             }
         }
 
-        srand(time(nullptr));
-        random_shuffle(deck.begin(), deck.end());
+        random_shuffle(
+            deck.begin(),
+            deck.end()
+        );
 
-        vector<Card> player1;
-        vector<Card> player2;
+        trumpSuit =
+            deck.back().suit;
+    }
 
-        for(int i = 0; i < 6; i++)
+    void dealCards()
+    {
+        while(player.size() < 6 &&
+              !deck.empty())
         {
-            player1.push_back(deck.back());
+            player.push_back(
+                deck.back()
+            );
+
             deck.pop_back();
+        }
 
-            player2.push_back(deck.back());
+        while(computer.size() < 6 &&
+              !deck.empty())
+        {
+            computer.push_back(
+                deck.back()
+            );
+
             deck.pop_back();
         }
+    }
 
-        cout << "\nКарты первого игрока:\n";
+    void showPlayerCards()
+    {
+        cout << "\nВаши карты:\n";
 
-        for(auto card : player1)
+        for(size_t i = 0;
+            i < player.size();
+            i++)
         {
-            cout << card.value << " ";
+            cout
+                << i + 1
+                << ") "
+                << cardToString(
+                       player[i]
+                   )
+                << "\n";
+        }
+    }
+
+public:
+
+    void play()
+    {
+        createDeck();
+
+        dealCards();
+
+        cout
+            << "Козырь: "
+            << suitToString(
+                   trumpSuit
+               )
+            << "\n";
+
+        while(
+            !player.empty() &&
+            !computer.empty()
+        )
+        {
+            showPlayerCards();
+
+            cout
+                << "\nВыберите карту для атаки: ";
+
+            int choice;
+            cin >> choice;
+
+            choice--;
+
+            if(choice < 0 ||
+               choice >=
+               (int)player.size())
+            {
+                cout
+                    << "Неверный выбор\n";
+
+                continue;
+            }
+
+            Card attack =
+                player[choice];
+
+            player.erase(
+                player.begin()
+                + choice
+            );
+
+            cout
+                << "\nВы атаковали "
+                << cardToString(
+                       attack
+                   )
+                << "\n";
+
+            int defendIndex = -1;
+
+            for(size_t i = 0;
+                i < computer.size();
+                i++)
+            {
+                if(beats(
+                       attack,
+                       computer[i]
+                   ))
+                {
+                    defendIndex = i;
+                    break;
+                }
+            }
+
+            if(defendIndex == -1)
+            {
+                cout
+                    << "Компьютер не смог отбиться\n";
+
+                computer.push_back(
+                    attack
+                );
+            }
+            else
+            {
+                Card defend =
+                    computer[
+                        defendIndex
+                    ];
+
+                cout
+                    << "Компьютер отбился "
+                    << cardToString(
+                           defend
+                       )
+                    << "\n";
+
+                computer.erase(
+                    computer.begin()
+                    + defendIndex
+                );
+            }
+
+            if(computer.empty())
+                break;
+
+            Card computerAttack =
+                computer.front();
+
+            computer.erase(
+                computer.begin()
+            );
+
+            cout
+                << "\nКомпьютер атакует "
+                << cardToString(
+                       computerAttack
+                   )
+                << "\n";
+
+            showPlayerCards();
+
+            cout
+                << "\nВыберите карту для защиты (0 если взять): ";
+
+            int defendChoice;
+            cin >> defendChoice;
+
+            if(defendChoice == 0)
+            {
+                cout
+                    << "Вы взяли карту\n";
+
+                player.push_back(
+                    computerAttack
+                );
+            }
+            else
+            {
+                defendChoice--;
+
+                if(defendChoice < 0 ||
+                   defendChoice >=
+                   (int)player.size())
+                {
+                    player.push_back(
+                        computerAttack
+                    );
+                }
+                else
+                {
+                    Card defend =
+                        player[
+                            defendChoice
+                        ];
+
+                    if(beats(
+                           computerAttack,
+                           defend
+                       ))
+                    {
+                        cout
+                            << "Отбились\n";
+
+                        player.erase(
+                            player.begin()
+                            + defendChoice
+                        );
+                    }
+                    else
+                    {
+                        cout
+                            << "Карта не бьёт\n";
+
+                        player.push_back(
+                            computerAttack
+                        );
+                    }
+                }
+            }
+
+            dealCards();
+
+            cout
+                << "\nКарт в колоде: "
+                << deck.size()
+                << "\n";
         }
 
-        cout << "\n";
-
-        cout << "\nКарты второго игрока:\n";
-
-        for(auto card : player2)
+        if(player.empty())
         {
-            cout << card.value << " ";
+            cout
+                << "\nПоздравляем! Вы победили!\n";
         }
-
-        cout << "\n";
-
-        int sum1 = 0;
-        int sum2 = 0;
-
-        for(auto c : player1)
-            sum1 += c.value;
-
-        for(auto c : player2)
-            sum2 += c.value;
-
-        cout << "\nУпрощённый режим Дурака\n";
-
-        if(sum1 > sum2)
-            cout << "Победил игрок 1\n";
-        else if(sum2 > sum1)
-            cout << "Победил игрок 2\n";
         else
-            cout << "Ничья\n";
+        {
+            cout
+                << "\nПобедил компьютер!\n";
+        }
     }
 };
 
 int main()
 {
-    while(true)
-    {
-        cout << "\n===== CARD GAMES =====\n";
-        cout << "1. Пьяница\n";
-        cout << "2. Дурак\n";
-        cout << "0. Выход\n";
-        cout << "Ваш выбор: ";
+    srand(time(nullptr));
 
-        int choice;
-        cin >> choice;
+    DurakGame game;
 
-        if(choice == 0)
-            break;
-
-        if(choice == 1)
-        {
-            DrunkardGame game;
-            game.play();
-        }
-        else if(choice == 2)
-        {
-            DurakGame game;
-            game.play();
-        }
-        else
-        {
-            cout << "Неверный выбор\n";
-        }
-    }
+    game.play();
 
     return 0;
 }
